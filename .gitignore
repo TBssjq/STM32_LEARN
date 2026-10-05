@@ -1,0 +1,58 @@
+# ---------- 构建产物 (CMake / Ninja) ----------
+build/
+cmake-build-*/
+out/
+
+# ---------- 编译生成的目标文件 ----------
+*.o
+*.obj
+*.a
+*.lib
+*.elf
+*.bin
+*.hex
+*.map
+*.su
+*.d
+*.i
+*.srec
+*.lst
+
+# ---------- CMake 缓存与中间文件 ----------
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+*.cmake.user
+install_manifest.txt
+
+# ---------- STM32CubeMX 生成但可重新生成的内容 ----------
+# 注意：Core/、Drivers/、startup_*.s、*.ld 属于源码，已纳入版本控制
+*.mxproject
+MX_tmp/
+
+# ---------- 编辑器 / IDE ----------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- 操作系统 ----------
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---------- 调试 / 日志 ----------
+*.log
+.gdb_history
+.cache/
+.clwb/
+
+# ---------- 本地环境变量 / 密钥 ----------
+.env
+*.local

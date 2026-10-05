@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500" font-family="Consolas,Menlo,'Microsoft YaHei',monospace">
+  <rect width="900" height="500" fill="#fbfbf9"/>
+  <text x="450" y="40" text-anchor="middle" font-size="20" font-weight="bold" fill="#111" font-family="'Microsoft YaHei',sans-serif">STM32F103 点亮外部 LED —— 最简接法（无电阻 / 无 OLED）</text>
+  <text x="450" y="62" text-anchor="middle" font-size="12" fill="#777" font-family="'Microsoft YaHei',sans-serif">只用到 2 根杜邦线：PA0 &#8594; LED 阳极，LED 阴极 &#8594; GND</text>
+
+  <!-- ============ 蓝板 ============ -->
+  <rect x="80" y="110" width="240" height="240" rx="6" fill="#1c5aa8" stroke="#0b2f5c" stroke-width="2"/>
+  <rect x="110" y="86" width="60" height="26" rx="3" fill="#c9ced6" stroke="#8f959d"/>
+  <text x="140" y="79" text-anchor="middle" font-size="10" fill="#8f959d" font-family="sans-serif">USB</text>
+  <text x="200" y="243" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff" font-family="sans-serif">STM32F103C8T6</text>
+  <text x="200" y="261" text-anchor="middle" font-size="10" fill="#a8c9ee" font-family="sans-serif">Blue Pill</text>
+  <text x="200" y="336" text-anchor="middle" font-size="10" fill="#8fb4dd" font-family="sans-serif">只用到 2 根线</text>
+
+  <rect x="300" y="125" width="20" height="225" rx="3" fill="#23262b"/>
+  <rect x="302" y="164" width="16" height="12" rx="2" fill="#d9b34a"/>
+  <rect x="302" y="284" width="16" height="12" rx="2" fill="#d9b34a"/>
+  <text x="294" y="175" text-anchor="end" font-size="14" font-weight="bold" fill="#ffd75e">PA0</text>
+  <text x="294" y="295" text-anchor="end" font-size="14" font-weight="bold" fill="#ffd75e">GND</text>
+
+  <!-- ============ LED ============ -->
+  <g fill="none" stroke-width="3.5" stroke-linecap="round">
+    <path d="M320,170 L526,170" stroke="#7048e8"/>
+    <path d="M598,170 C640,170 668,182 668,232 L668,290 L320,290" stroke="#2b2b2b"/>
+  </g>
+  <circle cx="562" cy="170" r="30" fill="#ffe3e3" stroke="#c92a2a" stroke-width="2"/>
+  <path d="M550,152 L578,170 L550,188 Z" fill="#c92a2a"/>
+  <line x1="578" y1="152" x2="578" y2="188" stroke="#c92a2a" stroke-width="4"/>
+  <g stroke="#ffffff" stroke-width="1.8">
+    <circle cx="320" cy="170" r="4.5" fill="#7048e8"/>
+    <circle cx="320" cy="290" r="4.5" fill="#2b2b2b"/>
+  </g>
+  <text x="536" y="146" text-anchor="end" font-size="10" font-weight="bold" fill="#c92a2a">A 长脚</text>
+  <text x="590" y="146" font-size="10" font-weight="bold" fill="#c92a2a">K 短脚</text>
+  <text x="562" y="228" text-anchor="middle" font-size="11" font-weight="bold" fill="#c92a2a">LED</text>
+
+  <!-- ============ 说明 ============ -->
+  <rect x="80" y="380" width="760" height="100" rx="8" fill="#ffffff" stroke="#dcdcd4"/>
+  <text x="104" y="406" font-size="14" font-weight="bold" fill="#111" font-family="sans-serif">注意（不串电阻的前提）</text>
+  <g font-size="12.5" fill="#444" font-family="sans-serif">
+    <text x="104" y="432">1. 绿 / 蓝 / 白 LED（Vf≈2.8~3.2V）：GPIO 内阻约 35Ω，电流约 3~14mA，直连安全，可以不接电阻。</text>
+    <text x="104" y="454">2. 红 / 黄 LED（Vf≈1.8~2.2V）：直连约 30~45mA，超过单脚 25mA 上限，必须串 1kΩ。</text>
+    <text x="104" y="474" fill="#888">3. 想完全零接线：把 led.h 改成 GPIOC / GPIO_PIN_13（板载 LED），并把 LED_On/Off 的 SET/RESET 对调。</text>
+  </g>
+</svg>
