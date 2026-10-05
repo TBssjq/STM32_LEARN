@@ -233,37 +233,42 @@ void MOTOR_StopAll(void);
 Core/Inc, Core/Src            CubeMX 生成：只改 USER CODE 区
   main.c                      初始化 + 一行 APP_Main()；Error_Handler 只调用 APP_ErrorTrap()
 
-Bsp/                          板级驱动，一个外设一个模块（对外接口 BSP_ 前缀）
-  bsp_led.c/h                 外部 LED(PA0) + 板上 LED(PC13)
-  bsp_oled.c/h                 SSD1306：1KB 显存、整页/局部刷新、硬件/软件 I2C 自动兜底
-  bsp_oledfont.h               ASCII 字库（F6x8 / F8X16）
-  bsp_buzzer.c/h               MH-FMD：有源/无源可切、音量(占空比)可调
-  bsp_light.c/h                光敏传感器：寄存器直接配 ADC1 + DO 数字输入
-  bsp_motor.c/h                TB6612 双电机：TIM4 双通道 PWM(20kHz) + 方向控制
-  bsp_wiretest.c/h             接线自检（探针法，见下）
+App/                          应用层（业务与演示，与 STM32 无关）
+  app_main.h                  C/C++ 边界头：extern "C" 暴露 APP_Main()/APP_ErrorTrap()
+  app_main.cpp                业务入口：初始化各层 + 选演示；错误陷阱
+  app_demo.hpp/.cpp           app::demo::motorTest / lightSensor / buzzerMelody
+  app_bomb.hpp/.cpp           app::bomb::run 定时炸弹演示
 
-App/                          应用层：业务与演示
-  app_main.c/h                业务入口 APP_Main()：初始化 BSP + 选演示；APP_ErrorTrap()
-  app_demo.c/h                APP_DEMO_MotorTest / APP_DEMO_LightSensor / APP_DEMO_BuzzerMelody
-  app_bomb.c/h                定时炸弹演示
+Bsp/                          板级层：本板专有（换板只改这里）
+  board.hpp/.cpp              bsp::led1/led2、bsp::motorA/motorB 对象图与引脚接线
+  wiretest.hpp/.cpp           bsp::wiretest 接线自检（探针法，见下）
+
+Drv/                          驱动层：通用驱动，可跨板复用
+  gpio.hpp                    drv::GpioPin + drv::gpio（时钟 / 模式 / 读写封装）
+  time.hpp / irq.hpp          drv::time（毫秒 / 延时）、drv::irq（关中断）
+  led.hpp/.cpp                drv::Led：一个 LED 对象（有效电平可配）
+  motor.hpp/.cpp              drv::Motor：TB6612 单路（TIM4 通道 + 方向）
+  buzzer.hpp/.cpp             drv::buzzer：MH-FMD，有源/无源可切、音量(占空比)可调
+  light.hpp/.cpp              drv::light：寄存器直接配 ADC1 + DO 数字输入
+  bsp_oled.c/h, bsp_oledfont.h  SSD1306 驱动保留为 C：1KB 显存、硬件/软件 I2C 自动兜底
 
 Legacy/                       历史代码，不参与编译（旧版 OLED 驱动 + BMP 图）
 ```
 
-约定：`main.c` 只管初始化和调用 `APP_Main()`；新功能写进 `Bsp/` 或 `App/` 的对应模块，不要堆进 main.c。
+约定：依赖方向单向向下 **`App → Bsp → Drv → HAL`**。`main.c` 只管初始化和调用 `APP_Main()`；新功能写进对应层，不要堆进 main.c；App 层不直接调用 HAL/寄存器。
 
 驱动都不依赖 CubeMX 重新生成：TIM4、ADC1 等外设由驱动内部用寄存器直接配置。
 
 ## 切换演示
 
-`App/app_main.c` 的 `APP_Main()` 里改一行：
+`App/app_main.cpp` 的 `APP_Main()` 里改一行：
 
-```c
-	APP_DEMO_MotorTest();       /* TB6612 双电机演示（当前） */
-	// APP_DEMO_LightSensor();  /* 光敏 + OLED 实时显示 */
-	// APP_DEMO_BuzzerMelody(); /* 蜂鸣器《欢乐颂》+ SOS */
-	// APP_BOMB_Run();          /* 定时炸弹：倒计时 + 加速滴答 + 爆炸 */
-	// BSP_WIRETEST_Run();      /* 接线自检（探针插 PB5） */
+```cpp
+    app::demo::motorTest();     /* TB6612 双电机演示（当前） */
+    // app::demo::lightSensor();  /* 光敏 + OLED 实时显示 */
+    // app::demo::buzzerMelody(); /* 蜂鸣器《欢乐颂》+ SOS */
+    // app::bomb::run();          /* 定时炸弹：倒计时 + 加速滴答 + 爆炸 */
+    // bsp::wiretest::run();      /* 接线自检（探针插 PB5） */
 ```
 
 ## 接线自检（探针法）

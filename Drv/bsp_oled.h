@@ -7,6 +7,9 @@
  * SSD1306 128x64 I2C 驱动
  *   接线：VDD->3.3V  GND->GND  SCK(SCL)->PB6  SDA->PB7
  *   坐标：x = 0~127（列），y = 0~63（行，像素单位）
+ *
+ * 说明：本驱动是纯过程式、单实例的显示驱动，改成 C++ 类没有实际收益，
+ *       因此保留为 C 模块（与 HAL 同属 C 库边界），用 extern "C" 供 C++ 调用。
  * ------------------------------------------------------------------ */
 
 #define BSP_OLED_I2C_ADDR     0x78   /* 7 位地址 0x3C 左移 1 位后给 HAL */
@@ -21,6 +24,10 @@
 /* 字体大小：6 = 6x8 点阵，8 = 8x16 点阵（传其他值一律按 6x8 处理） */
 #define BSP_OLED_FONT_6X8     6
 #define BSP_OLED_FONT_8X16    8
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* 初始化：返回 HAL_OK 表示屏已就绪
  * 内部流程：优先硬件 I2C -> 不行再用软件位翻转(会自动试 SDA/SCL 对调)
@@ -63,5 +70,9 @@ void BSP_OLED_DrawPixel(uint8_t x, uint8_t y, uint8_t color);
 void BSP_OLED_ShowChar(uint8_t x, uint8_t y, char ch, uint8_t size, uint8_t color);
 void BSP_OLED_ShowString(uint8_t x, uint8_t y, const char *str, uint8_t size, uint8_t color);
 void BSP_OLED_ShowNum(uint8_t x, uint8_t y, uint32_t num, uint8_t len, uint8_t size, uint8_t color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SSD1306_H */

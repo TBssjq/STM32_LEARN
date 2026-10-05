@@ -15,32 +15,36 @@
 - MCU：STM32F103C8T6（Cortex-M3，72MHz，64KB Flash / 20KB RAM）
 - CubeMX 版本 / 固件包：见 STM32_LEARN.ioc 与 Drivers/
 - 工具链：CMake + Ninja + arm-none-eabi-gcc（STM32CubeCLT）；构建目录 cmake-build-stm32
-- 底层库：HAL（外设初始化由各 Bsp 模块用寄存器直接配置，避免被 CubeMX 重新生成覆盖）
+- 底层库：HAL（外设初始化由各 Drv 驱动用寄存器直接配置，避免被 CubeMX 重新生成覆盖）
 - RTOS：无
-- 目录结构：
+- 分层结构（依赖方向单向向下 App → Bsp → Drv → HAL）：
   - CubeMX 生成（只改 USER CODE 区）：Core/Inc、Core/Src、Drivers/、cmake/stm32cubemx/
-  - 板级驱动：Bsp/bsp_*.c|h（一个外设一个模块）
-  - 应用逻辑：App/app_*.c|h（业务入口 App/app_main.c）
+  - 应用层：App/*.hpp|.cpp（业务入口 App/app_main.cpp，C 边界头 App/app_main.h）
+  - 板级层：Bsp/board.*、Bsp/wiretest.*（本板对象图/接线、板上自检）
+  - 驱动层：Drv/*.hpp|.cpp（通用驱动，可跨板复用；OLED 驱动仍为 C）
   - 不参与编译的历史代码：Legacy/
 - 模块清单（新代码放进对应模块，不要堆进 main.c）：
 
   | 模块 | 文件 | 负责 |
   |---|---|---|
-  | LED | Bsp/bsp_led.c/h | 外部 LED(PA0) + 板上 LED(PC13) |
-  | OLED | Bsp/bsp_oled.c/h、Bsp/bsp_oledfont.h | SSD1306 显存/刷新/字符；硬件/软件 I2C 自动兜底 |
-  | 蜂鸣器 | Bsp/bsp_buzzer.c/h | MH-FMD：有源/无源、音量、音名 |
-  | 光敏 | Bsp/bsp_light.c/h | ADC1 光强 + DO 阈值 |
-  | 电机 | Bsp/bsp_motor.c/h | TB6612 双路 PWM/方向 |
-  | 接线自检 | Bsp/bsp_wiretest.c/h | 探针法查线 |
-  | 演示 | App/app_demo.c/h | 电机 / 光敏 / 蜂鸣器演示 |
-  | 定时炸弹 | App/app_bomb.c/h | 倒计时演示 |
-  | 业务入口 | App/app_main.c/h | APP_Main() 初始化并选演示；APP_ErrorTrap() |
+  | GPIO 封装 | Drv/gpio.hpp | drv::GpioPin / drv::gpio：时钟、模式、读写 |
+  | 时间/中断 | Drv/time.hpp、Drv/irq.hpp | drv::time（毫秒/延时）、drv::irq（关中断） |
+  | LED | Drv/led.hpp/.cpp | drv::Led：单个 LED，有效电平可配 |
+  | OLED | Drv/bsp_oled.c/h、Drv/bsp_oledfont.h | SSD1306 显存/刷新/字符；硬件/软件 I2C 自动兜底（C 驱动） |
+  | 蜂鸣器 | Drv/buzzer.hpp/.cpp | drv::buzzer：MH-FMD，有源/无源、音量、音名 |
+  | 光敏 | Drv/light.hpp/.cpp | drv::light：ADC1 光强 + DO 阈值 |
+  | 电机 | Drv/motor.hpp/.cpp | drv::Motor：TB6612 单路 PWM/方向 |
+  | 板级对象图 | Bsp/board.hpp/.cpp | bsp::led1/led2、bsp::motorA/motorB（引脚接线集中于此） |
+  | 接线自检 | Bsp/wiretest.hpp/.cpp | bsp::wiretest：探针法查线 |
+  | 演示 | App/app_demo.hpp/.cpp | app::demo：电机 / 光敏 / 蜂鸣器演示 |
+  | 定时炸弹 | App/app_bomb.hpp/.cpp | app::bomb::run：倒计时演示 |
+  | 业务入口 | App/app_main.h/.cpp | extern "C" APP_Main()/APP_ErrorTrap() |
 
-- 调用关系：main.c（CubeMX）→ APP_Main() → Bsp 模块；Bsp 模块之间不互相调用
-- 命名：对外接口 `<模块>_动作` 首字母大写（BSP_LED_Init、BSP_OLED_ShowString）；文件内部静态函数用小写下划线（历史遗留的内部命名暂不强制统一）
-- 编码规范：C11，stdint.h 固定宽度类型，4 空格缩进。
+- 调用关系：main.c（CubeMX）→ APP_Main() → Bsp/Drv；下层不反向依赖上层
+- 命名：命名空间 app::/bsp::/drv:: 与目录对应；类名大驼峰（Led、Motor），函数小驼峰（setSpeed）
+- 编码规范：C++17（C 驱动用 C11），固定宽度整型，4 空格缩进；工具链禁用异常与 RTTI。
 - 禁止事项：禁止 malloc/free，禁止在中断中阻塞、printf、HAL_Delay，禁止长延时，禁止未保护的共享变量。
-- 硬件访问规则：App 层只调用 Bsp 暴露的接口，不直接散落寄存器操作，除非我明确要求。
+- 硬件访问规则：App 层只调用 Bsp/Drv 暴露的接口，不直接调用 HAL/寄存器。
 - 引脚分配与接线：见 README.md；踩坑记录与自检清单：见 MISTAKES.md。
 - 接口摘要：我每次会在任务中粘贴相关 .h 关键声明，你只依赖这些声明，不要自行猜测接口。
 
@@ -56,7 +60,7 @@
    - 不要修改 `MX_xxx_Init()` 中非 USER CODE 区。
    - 不要修改 `SystemClock_Config()`、`MX_GPIO_Init()` 等，除非在 USER CODE 区。
 4. 新增功能优先放在自定义目录：
-   - 例如 `Bsp/bsp_uart.c`、`Bsp/bsp_uart.h`、`App/app_main.c`。
+   - 例如 `Drv/uart.hpp`、`Drv/uart.cpp`、`App/app_main.cpp`。
    - 在 CubeMX 文件的 USER CODE 区只做初始化和调用。
 5. 禁止输出或建议修改 `.ioc` 文件。不要建议重新生成 CubeMX 配置，除非我明确要求。
 6. 如果任务涉及新文件，只给：文件名、接口声明、最小实现。
